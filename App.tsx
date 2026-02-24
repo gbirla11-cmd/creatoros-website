@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import LandingPage from './components/LandingPage';
-import Dashboard from './components/Dashboard';
+import LandingPage from "./LandingPage";
+import Dashboard from "./Dashboard";
 
 function App() {
   const [showDashboard, setShowDashboard] = useState(false);
