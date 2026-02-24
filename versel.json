@@ -1,8 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
   "rewrites": [
     { "source": "/apply", "destination": "/apply.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!apply).*)", "destination": "/index.html" }
   ]
 }
