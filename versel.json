@@ -1,0 +1,26 @@
+{
+  "rewrites": [
+    { "source": "/apply", "destination": "/apply.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+**5.** Commit changes
+
+---
+
+## Also Make Sure apply.html is in the Right Place
+
+Your built site serves files from the `dist` folder after Vite compiles everything. Files in `src` are NOT served directly.
+
+Check this — in your GitHub repo root, do you see `apply.html` at the **top level** alongside `index.html`? 
+
+Not inside `src/` — at the very root like this:
+```
+creatoros-website/
+├── apply.html        ← needs to be HERE
+├── index.html        
+├── vercel.json       ← add this
+├── src/
+├── package.json
