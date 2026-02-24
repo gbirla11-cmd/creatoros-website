@@ -6,21 +6,4 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  build: {
-    rollupOptions: {
-      input: {
-        main: 'index.html',
-        apply: 'apply.html',
-      },
-    },
-  },
 });
-```
-
-**Commit changes.**
-
----
-
-Then wait 60 seconds for Vercel to rebuild and test:
-```
-creatoros.co.in/apply
