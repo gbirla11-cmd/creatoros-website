@@ -1,5 +1,21 @@
 {
+  "cleanUrls": true,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
+```
+
+The `cleanUrls: true` tells Vercel to serve `login.html` when someone visits `/login`, `terms.html` for `/terms`, etc. automatically.
+
+Then update your footer links in `index.html` — change:
+```
+href="/privacy.html"  →  href="/privacy"
+href="/terms.html"    →  href="/terms"
+href="/login.html"    →  href="/login"
+```
+
+And in `login.html` change:
+```
+href="/terms.html"    →  href="/terms"
+href="/privacy.html"  →  href="/privacy"
