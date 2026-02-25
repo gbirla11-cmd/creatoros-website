@@ -1,21 +1,10 @@
 {
   "cleanUrls": true,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/login", "dest": "/login.html" },
+    { "src": "/privacy", "dest": "/privacy.html" },
+    { "src": "/terms", "dest": "/terms.html" },
+    { "src": "/apply", "dest": "https://tally.so/r/EkXjdq", "status": 302 },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
-```
-
-The `cleanUrls: true` tells Vercel to serve `login.html` when someone visits `/login`, `terms.html` for `/terms`, etc. automatically.
-
-Then update your footer links in `index.html` — change:
-```
-href="/privacy.html"  →  href="/privacy"
-href="/terms.html"    →  href="/terms"
-href="/login.html"    →  href="/login"
-```
-
-And in `login.html` change:
-```
-href="/terms.html"    →  href="/terms"
-href="/privacy.html"  →  href="/privacy"
