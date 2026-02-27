@@ -6,13 +6,14 @@
   <title>Login — CreatorOS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --cream: #F7F4EE; --cream-2: #EDE9DF; --ink: #18160F;
       --ink-2: #3D3A30; --ink-3: #7A7669; --amber: #D4820A;
       --amber-l: #F5A623; --white: #FFFFFF; --border: #DDD8CE;
-      --red: #C0392B; --red-l: #FDECEA;
+      --red: #C0392B; --red-l: #FDECEA; --green: #27AE60; --green-l: #EAFAF1;
     }
     html, body { height: 100%; }
     body {
@@ -24,8 +25,6 @@
       grid-template-columns: 1fr 1fr;
       min-height: 100vh;
     }
-
-    /* LEFT PANEL */
     .left-panel {
       background: var(--ink);
       display: flex; flex-direction: column;
@@ -42,102 +41,52 @@
     .lp-logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fff; text-decoration: none; position: relative; }
     .lp-logo span { color: var(--amber-l); }
     .lp-body { position: relative; }
-    .lp-headline {
-      font-family: 'DM Serif Display', serif;
-      font-size: 42px; line-height: 1.1;
-      color: #fff; font-weight: 400;
-      letter-spacing: -.02em; margin-bottom: 20px;
-    }
+    .lp-headline { font-family: 'DM Serif Display', serif; font-size: 42px; line-height: 1.1; color: #fff; font-weight: 400; letter-spacing: -.02em; margin-bottom: 20px; }
     .lp-headline em { color: var(--amber-l); font-style: italic; }
     .lp-sub { font-size: 15px; color: rgba(255,255,255,.45); line-height: 1.7; font-weight: 300; margin-bottom: 40px; }
     .lp-features { display: flex; flex-direction: column; gap: 16px; }
     .lp-feature { display: flex; align-items: center; gap: 14px; }
-    .lp-feature-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--amber); flex-shrink: 0;
-    }
+    .lp-feature-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); flex-shrink: 0; }
     .lp-feature-text { font-size: 14px; color: rgba(255,255,255,.6); }
     .lp-footer { font-size: 12px; color: rgba(255,255,255,.25); position: relative; }
-
-    /* RIGHT PANEL */
-    .right-panel {
-      display: flex; align-items: center; justify-content: center;
-      padding: 48px 40px;
-      background: var(--cream);
-    }
+    .right-panel { display: flex; align-items: center; justify-content: center; padding: 48px 40px; background: var(--cream); }
     .login-card { width: 100%; max-width: 400px; }
-    .login-header { margin-bottom: 40px; }
+    .login-header { margin-bottom: 32px; }
     .login-header h1 { font-family: 'DM Serif Display', serif; font-size: 32px; letter-spacing: -.02em; color: var(--ink); margin-bottom: 8px; }
     .login-header p { font-size: 14px; color: var(--ink-3); font-weight: 300; }
     .login-header p a { color: var(--amber); text-decoration: none; font-weight: 500; }
     .login-header p a:hover { text-decoration: underline; }
-
-    .notice-box {
-      background: #FFF9F0; border: 1px solid #FAD9A0;
-      border-radius: 10px; padding: 14px 16px;
-      margin-bottom: 28px;
-      display: flex; align-items: flex-start; gap: 10px;
-    }
+    .notice-box { background: #FFF9F0; border: 1px solid #FAD9A0; border-radius: 10px; padding: 14px 16px; margin-bottom: 28px; display: flex; align-items: flex-start; gap: 10px; }
     .notice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
     .notice-text { font-size: 13px; color: var(--ink-2); line-height: 1.55; }
     .notice-text strong { color: var(--ink); display: block; margin-bottom: 2px; }
-
+    .err-banner { background: var(--red-l); border: 1px solid rgba(192,57,43,.2); color: var(--red); padding: 11px 14px; border-radius: 9px; font-size: 13px; margin-bottom: 20px; display: none; }
+    .err-banner.show { display: block; }
+    .success-banner { background: var(--green-l); border: 1px solid rgba(39,174,96,.2); color: var(--green); padding: 11px 14px; border-radius: 9px; font-size: 13px; margin-bottom: 20px; display: none; }
+    .success-banner.show { display: block; }
     .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
     .field label { font-size: 12px; font-weight: 600; color: var(--ink-2); letter-spacing: .04em; text-transform: uppercase; }
-    .field input {
-      font-family: 'DM Sans', sans-serif; font-size: 14px;
-      padding: 13px 16px; border: 1.5px solid var(--border);
-      border-radius: 10px; background: var(--white); color: var(--ink);
-      outline: none; transition: border-color .2s, box-shadow .2s; width: 100%;
-    }
+    .field input { font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 13px 16px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--white); color: var(--ink); outline: none; transition: border-color .2s, box-shadow .2s; width: 100%; }
     .field input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(212,130,10,.1); }
-    .field input.err { border-color: var(--red); }
-    .err-msg { font-size: 12px; color: var(--red); }
     .field-footer { display: flex; justify-content: flex-end; }
-    .forgot-link { font-size: 12px; color: var(--ink-3); text-decoration: none; transition: color .2s; }
+    .forgot-link { font-size: 12px; color: var(--ink-3); text-decoration: none; transition: color .2s; cursor: pointer; }
     .forgot-link:hover { color: var(--amber); }
-
-    .btn-login {
-      width: 100%; padding: 14px; background: var(--ink); color: var(--cream);
-      border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
-      font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s;
-      margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .btn-login:hover { background: var(--ink-2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(24,22,15,.18); }
-    .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; }
-
+    .btn-login { width: 100%; padding: 14px; background: var(--ink); color: var(--cream); border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-login:hover:not(:disabled) { background: var(--ink-2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(24,22,15,.18); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
     .divider { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
     .divider-line { flex: 1; height: 1px; background: var(--border); }
     .divider-text { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
-
-    .btn-google {
-      width: 100%; padding: 12px; background: var(--white); color: var(--ink);
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
-      cursor: pointer; transition: all .2s;
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-    .btn-google:hover { border-color: var(--ink-3); background: var(--cream-2); }
-    .google-icon { width: 18px; height: 18px; }
-
+    .btn-google { width: 100%; padding: 12px; background: var(--white); color: var(--ink); border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .btn-google:hover:not(:disabled) { border-color: var(--ink-3); background: var(--cream-2); }
+    .btn-google:disabled { opacity: .6; cursor: not-allowed; }
+    .google-icon { width: 18px; height: 18px; flex-shrink: 0; }
     .login-footer { margin-top: 28px; text-align: center; font-size: 13px; color: var(--ink-3); }
     .login-footer a { color: var(--amber); text-decoration: none; font-weight: 500; }
     .login-footer a:hover { text-decoration: underline; }
-
-    .err-banner {
-      background: var(--red-l); border: 1px solid rgba(192,57,43,.2);
-      color: var(--red); padding: 11px 14px; border-radius: 9px;
-      font-size: 13px; margin-bottom: 20px; display: none;
-    }
-    .err-banner.show { display: block; }
-
-    .spinner {
-      width: 16px; height: 16px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
-      animation: spin .7s linear infinite;
-    }
+    .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; animation: spin .7s linear infinite; }
+    .spinner-dark { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(0,0,0,.15); border-top-color: var(--ink); animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     @media (max-width: 768px) {
       body { grid-template-columns: 1fr; }
       .left-panel { display: none; }
@@ -147,7 +96,6 @@
 </head>
 <body>
 
-<!-- LEFT PANEL -->
 <div class="left-panel">
   <div class="left-panel-bg"></div>
   <a href="/" class="lp-logo">Creator<span>OS</span></a>
@@ -164,7 +112,6 @@
   <div class="lp-footer">© 2026 CreatorOS · creatoros.co.in</div>
 </div>
 
-<!-- RIGHT PANEL -->
 <div class="right-panel">
   <div class="login-card">
     <div class="login-header">
@@ -176,11 +123,12 @@
       <div class="notice-icon">🚀</div>
       <div class="notice-text">
         <strong>Early Access Phase</strong>
-        CreatorOS is currently invite-only. If you've been accepted, use the credentials from your onboarding email.
+        CreatorOS is invite-only. Use Google Sign-In or the email you registered with.
       </div>
     </div>
 
-    <div class="err-banner" id="errBanner">Invalid email or password. Please try again.</div>
+    <div class="err-banner" id="errBanner"></div>
+    <div class="success-banner" id="successBanner"></div>
 
     <div class="field">
       <label>Email Address</label>
@@ -191,19 +139,19 @@
       <label>Password</label>
       <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
       <div class="field-footer">
-        <a href="mailto:hello@creatoros.co.in?subject=Password Reset Request" class="forgot-link">Forgot password?</a>
+        <span class="forgot-link" onclick="handleForgotPassword()">Forgot password?</span>
       </div>
     </div>
 
-    <button class="btn-login" id="loginBtn" onclick="handleLogin()">Sign In →</button>
+    <button class="btn-login" id="loginBtn" onclick="handleEmailLogin()">Sign In →</button>
 
     <div class="divider">
       <div class="divider-line"></div>
-      <div class="divider-text">or</div>
+      <div class="divider-text">or continue with</div>
       <div class="divider-line"></div>
     </div>
 
-    <button class="btn-google" onclick="handleGoogle()">
+    <button class="btn-google" id="googleBtn" onclick="handleGoogleLogin()">
       <svg class="google-icon" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -214,45 +162,92 @@
     </button>
 
     <div class="login-footer">
-      By signing in, you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.
+      By signing in you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a>.
     </div>
   </div>
 </div>
 
 <script>
-  function handleLogin() {
+  // ── SUPABASE INIT ──
+  const SUPABASE_URL = 'https://zvlrjyuvbozdkbzxsske.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_2vQZ1VI3WTVLnO6LRt0hbA_aktzBDnt';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ── CHECK IF ALREADY LOGGED IN ──
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.href = '/dashboard';
+  });
+
+  // ── HELPERS ──
+  function showErr(msg) {
+    const el = document.getElementById('errBanner');
+    el.textContent = msg;
+    el.classList.add('show');
+    document.getElementById('successBanner').classList.remove('show');
+  }
+  function showSuccess(msg) {
+    const el = document.getElementById('successBanner');
+    el.textContent = msg;
+    el.classList.add('show');
+    document.getElementById('errBanner').classList.remove('show');
+  }
+  function setLoading(btn, loading, text, spinner = 'light') {
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? `<div class="${spinner === 'dark' ? 'spinner-dark' : 'spinner'}"></div> ${text}`
+      : text;
+  }
+
+  // ── EMAIL LOGIN ──
+  async function handleEmailLogin() {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const btn = document.getElementById('loginBtn');
-    const err = document.getElementById('errBanner');
 
-    if (!email || !password) {
-      err.textContent = 'Please enter your email and password.';
-      err.classList.add('show');
-      return;
+    if (!email || !password) { showErr('Please enter your email and password.'); return; }
+
+    setLoading(btn, true, 'Signing in…');
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    setLoading(btn, false, 'Sign In →');
+
+    if (error) {
+      showErr(error.message === 'Invalid login credentials'
+        ? 'Invalid email or password. If you\'re a founding member, check your invite email.'
+        : error.message);
+    } else {
+      window.location.href = '/dashboard';
     }
-
-    err.classList.remove('show');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Signing in…';
-
-    // Simulate — replace with real auth
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerHTML = 'Sign In →';
-      err.textContent = 'Login is not available yet. CreatorOS is in early access — check your onboarding email for access details.';
-      err.classList.add('show');
-    }, 1500);
   }
 
-  function handleGoogle() {
-    const err = document.getElementById('errBanner');
-    err.textContent = 'Google login coming soon. Please use email login or contact hello@creatoros.co.in for access.';
-    err.classList.add('show');
+  // ── GOOGLE LOGIN ──
+  async function handleGoogleLogin() {
+    const btn = document.getElementById('googleBtn');
+    setLoading(btn, true, 'Connecting…', 'dark');
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/dashboard' }
+    });
+    if (error) {
+      setLoading(btn, false, '<svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Continue with Google');
+      showErr('Google login failed. Please try again.');
+    }
   }
 
+  // ── FORGOT PASSWORD ──
+  async function handleForgotPassword() {
+    const email = document.getElementById('email').value.trim();
+    if (!email) { showErr('Enter your email address first, then click Forgot password.'); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/reset-password'
+    });
+    if (error) { showErr(error.message); }
+    else { showSuccess('Password reset link sent to ' + email + '. Check your inbox.'); }
+  }
+
+  // ── ENTER KEY ──
   document.getElementById('password').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleLogin();
+    if (e.key === 'Enter') handleEmailLogin();
   });
 </script>
 
