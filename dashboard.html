@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — CreatorOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream: #F7F4EE; --cream-2: #EDE9DF; --ink: #18160F;
+      --ink-2: #3D3A30; --ink-3: #7A7669; --amber: #D4820A;
+      --amber-l: #F5A623; --white: #FFFFFF; --border: #DDD8CE;
+      --green: #27AE60; --green-l: #EAFAF1; --red: #C0392B; --red-l: #FDECEA;
+      --sidebar: 240px;
+    }
+    html, body { height: 100%; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar); background: var(--ink); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; overflow-y: auto;
+    }
+    .sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .sidebar-logo a { font-family: 'DM Serif Display', serif; font-size: 20px; color: #fff; text-decoration: none; }
+    .sidebar-logo a span { color: var(--amber-l); }
+    .sidebar-nav { padding: 16px 12px; flex: 1; }
+    .nav-section-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.25); padding: 0 12px; margin: 16px 0 8px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: 8px; font-size: 14px; color: rgba(255,255,255,.55);
+      cursor: pointer; transition: all .2s; margin-bottom: 2px; text-decoration: none;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); }
+    .nav-item.active { background: rgba(212,130,10,.15); color: var(--amber-l); }
+    .nav-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .sidebar-footer { padding: 16px 12px; border-top: 1px solid rgba(255,255,255,.08); }
+    .user-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--amber); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #fff; flex-shrink: 0; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 500; color: rgba(255,255,255,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-plan { font-size: 11px; color: rgba(255,255,255,.3); }
+    .logout-btn { font-size: 11px; color: rgba(255,255,255,.3); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all .2s; }
+    .logout-btn:hover { color: rgba(255,255,255,.6); background: rgba(255,255,255,.05); }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sidebar); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 40; }
+    .topbar-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s; border: none; text-decoration: none; }
+    .btn-primary { background: var(--ink); color: var(--cream); }
+    .btn-primary:hover { background: var(--ink-2); transform: translateY(-1px); }
+    .btn-amber { background: var(--amber); color: #fff; }
+    .btn-amber:hover { background: #c0740a; }
+    .btn-outline { background: transparent; color: var(--ink); border: 1.5px solid var(--border); }
+    .btn-outline:hover { border-color: var(--ink); background: var(--cream-2); }
+    .content { padding: 32px; flex: 1; }
+
+    /* ── STATS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; }
+    .stat-label { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); line-height: 1; margin-bottom: 6px; }
+    .stat-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+    .badge-green { background: var(--green-l); color: var(--green); }
+    .badge-amber { background: #FFF4E0; color: var(--amber); }
+    .badge-gray { background: var(--cream-2); color: var(--ink-3); }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 32px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); }
+    .section-sub { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+
+    /* ── CAMPAIGN CARDS ── */
+    .campaigns-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .campaign-card { background: var(--white); border: 1.5px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: all .2s; }
+    .campaign-card:hover { box-shadow: 0 8px 24px rgba(24,22,15,.08); transform: translateY(-2px); border-color: var(--ink-3); }
+    .campaign-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .campaign-title { font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.3; }
+    .status-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px; white-space: nowrap; flex-shrink: 0; margin-left: 8px; }
+    .status-draft { background: var(--cream-2); color: var(--ink-3); }
+    .status-active { background: #E8F5E9; color: #2E7D32; }
+    .status-completed { background: #EDE7F6; color: #4527A0; }
+    .campaign-brief { font-size: 13px; color: var(--ink-3); line-height: 1.55; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .campaign-meta { display: flex; gap: 16px; }
+    .meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-3); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { background: var(--white); border: 1.5px dashed var(--border); border-radius: 12px; padding: 48px 32px; text-align: center; }
+    .empty-icon { font-size: 40px; margin-bottom: 16px; }
+    .empty-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 8px; }
+    .empty-sub { font-size: 14px; color: var(--ink-3); font-weight: 300; margin-bottom: 24px; max-width: 340px; margin-left: auto; margin-right: auto; }
+
+    /* ── AGENT STATUS ── */
+    .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .agent-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+    .agent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .agent-dot.online { background: var(--green); box-shadow: 0 0 0 3px rgba(39,174,96,.2); }
+    .agent-dot.idle { background: var(--amber); box-shadow: 0 0 0 3px rgba(212,130,10,.2); }
+    .agent-dot.offline { background: #ccc; }
+    .agent-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .agent-status { font-size: 11px; color: var(--ink-3); margin-top: 1px; }
+
+    /* ── MODAL ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 540px; padding: 32px; position: relative; box-shadow: 0 24px 64px rgba(0,0,0,.15); }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; font-size: 20px; color: var(--ink-3); line-height: 1; padding: 4px; }
+    .modal-close:hover { color: var(--ink); }
+    .modal-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--ink); margin-bottom: 6px; }
+    .modal-sub { font-size: 14px; color: var(--ink-3); margin-bottom: 24px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .field label { font-size: 12px; font-weight: 600; color: var(--ink-2); letter-spacing: .04em; text-transform: uppercase; }
+    .field input, .field textarea, .field select { font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 9px; background: var(--cream); color: var(--ink); outline: none; transition: border-color .2s; width: 100%; }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--amber); background: var(--white); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── LOADING ── */
+    .loading { display: flex; align-items: center; justify-content: center; padding: 48px; }
+    .loading-spinner { width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--amber); animation: spin .8s linear infinite; }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--cream); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 200; transform: translateY(80px); opacity: 0; transition: all .3s; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error { border-left: 3px solid var(--red); }
+
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .main { margin-left: 0; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <a href="/">Creator<span>OS</span></a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Workspace</div>
+    <a class="nav-item active" onclick="showSection('campaigns')">
+      <div class="nav-icon">📋</div> Campaigns
+    </a>
+    <a class="nav-item" onclick="showSection('tasks')">
+      <div class="nav-icon">✅</div> Tasks
+    </a>
+    <a class="nav-item" onclick="showSection('freelancers')">
+      <div class="nav-icon">👥</div> Freelancers
+    </a>
+    <div class="nav-section-label">AI Agents</div>
+    <a class="nav-item" onclick="showSection('agents')">
+      <div class="nav-icon">🤖</div> Agent Status
+    </a>
+    <div class="nav-section-label">Account</div>
+    <a class="nav-item" href="/">
+      <div class="nav-icon">🏠</div> Home
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="userName">Loading...</div>
+        <div class="user-plan">Early Access</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="handleLogout()" style="width:100%;margin-top:8px;">Sign out</button>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Campaigns</div>
+    <div class="topbar-actions">
+      <button class="btn btn-amber" onclick="openNewCampaign()">+ New Campaign</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- CAMPAIGNS SECTION -->
+    <div id="section-campaigns">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Active Campaigns</div>
+          <div class="stat-value" id="statActive">—</div>
+          <span class="stat-badge badge-green">Running</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Budget</div>
+          <div class="stat-value" id="statBudget">—</div>
+          <span class="stat-badge badge-amber">Allocated</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Freelancers</div>
+          <div class="stat-value" id="statFreelancers">—</div>
+          <span class="stat-badge badge-gray">In pool</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed</div>
+          <div class="stat-value" id="statCompleted">—</div>
+          <span class="stat-badge badge-green">Done</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Your Campaigns</div>
+            <div class="section-sub">All your AI-managed content campaigns</div>
+          </div>
+        </div>
+        <div id="campaignsList"><div class="loading"><div class="loading-spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- TASKS SECTION -->
+    <div id="section-tasks" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Tasks</div>
+            <div class="section-sub">All tasks across your campaigns</div>
+          </div>
+        </div>
+        <div id="tasksList"><div class="loading"><div class="loading-spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- FREELANCERS SECTION -->
+    <div id="section-freelancers" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Freelancer Pool</div>
+            <div class="section-sub">AI-vetted talent ready to hire</div>
+          </div>
+          <button class="btn btn-outline" onclick="openAddFreelancer()">+ Add Freelancer</button>
+        </div>
+        <div id="freelancersList"><div class="loading"><div class="loading-spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- AGENTS SECTION -->
+    <div id="section-agents" style="display:none">
+      <div class="section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Agent Status</div>
+            <div class="section-sub">Your AI Orchestrator and sub-agents</div>
+          </div>
+        </div>
+        <div class="agent-grid">
+          <div class="agent-card"><div class="agent-dot idle"></div><div><div class="agent-name">Orchestrator</div><div class="agent-status">Idle — waiting for campaign</div></div></div>
+          <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Decomposer</div><div class="agent-status">Not yet deployed</div></div></div>
+          <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Matcher</div><div class="agent-status">Not yet deployed</div></div></div>
+          <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Scorer</div><div class="agent-status">Not yet deployed</div></div></div>
+          <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Contract Agent</div><div class="agent-status">Not yet deployed</div></div></div>
+          <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Budget Agent</div><div class="agent-status">Not yet deployed</div></div></div>
+          <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Escrow Agent</div><div class="agent-status">Not yet deployed</div></div></div>
+        </div>
+        <div style="margin-top:24px;padding:20px;background:var(--white);border:1px solid var(--border);border-radius:12px;">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:6px;">🚧 Agents Coming Soon</div>
+          <div style="font-size:13px;color:var(--ink-3);line-height:1.6;">Your AI agents are being configured. Once deployed, the Orchestrator will automatically break down campaigns, find freelancers, score submissions, and manage contracts — all without you lifting a finger.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── NEW CAMPAIGN MODAL ── -->
+<div class="modal-overlay" id="campaignModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('campaignModal')">×</button>
+    <div class="modal-title">New Campaign</div>
+    <div class="modal-sub">Describe your campaign and the AI will break it into tasks automatically.</div>
+    <div class="field">
+      <label>Campaign Title</label>
+      <input type="text" id="campTitle" placeholder="e.g. Skincare brand — 3 Reels" />
+    </div>
+    <div class="field">
+      <label>Brief</label>
+      <textarea id="campBrief" placeholder="Describe what you need — content type, tone, goals, deliverables..."></textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Budget (₹)</label>
+        <input type="number" id="campBudget" placeholder="80000" />
+      </div>
+      <div class="field">
+        <label>Deadline</label>
+        <input type="date" id="campDeadline" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-amber" id="saveCampaignBtn" onclick="saveCampaign()" style="flex:1">Create Campaign</button>
+      <button class="btn btn-outline" onclick="closeModal('campaignModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD FREELANCER MODAL ── -->
+<div class="modal-overlay" id="freelancerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('freelancerModal')">×</button>
+    <div class="modal-title">Add Freelancer</div>
+    <div class="modal-sub">Add a freelancer to your talent pool.</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="flName" placeholder="Full name" />
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <input type="text" id="flRole" placeholder="e.g. Video Editor" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="flEmail" placeholder="freelancer@email.com" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-amber" id="saveFreelancerBtn" onclick="saveFreelancer()" style="flex:1">Add to Pool</button>
+      <button class="btn btn-outline" onclick="closeModal('freelancerModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL = 'https://zvlrjyuvbozdkbzxsske.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_2vQZ1VI3WTVLnO6LRt0hbA_aktzBDnt';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentUser = null;
+
+  // ── AUTH CHECK ──
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = '/login.html'; return; }
+    currentUser = session.user;
+    const name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Creator';
+    const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userAvatar').textContent = initials;
+    loadDashboard();
+  }
+
+  // ── LOAD DATA ──
+  async function loadDashboard() {
+    await Promise.all([loadCampaigns(), loadStats(), loadFreelancers(), loadTasks()]);
+  }
+
+  async function loadCampaigns() {
+    const { data, error } = await sb.from('campaigns').select('*').order('created_at', { ascending: false });
+    const el = document.getElementById('campaignsList');
+    if (error || !data?.length) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🎯</div>
+          <div class="empty-title">No campaigns yet</div>
+          <div class="empty-sub">Create your first campaign and your AI manager will break it into tasks and find the right talent.</div>
+          <button class="btn btn-amber" onclick="openNewCampaign()">+ Create First Campaign</button>
+        </div>`;
+      return;
+    }
+    el.innerHTML = `<div class="campaigns-grid">${data.map(c => `
+      <div class="campaign-card">
+        <div class="campaign-card-header">
+          <div class="campaign-title">${c.title || 'Untitled Campaign'}</div>
+          <span class="status-pill status-${c.status || 'draft'}">${c.status || 'draft'}</span>
+        </div>
+        <div class="campaign-brief">${c.brief || 'No brief added.'}</div>
+        <div class="campaign-meta">
+          <div class="meta-item">💰 ₹${c.budget ? Number(c.budget).toLocaleString('en-IN') : '—'}</div>
+          <div class="meta-item">📅 ${c.deadline || 'No deadline'}</div>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  async function loadStats() {
+    const { data: camps } = await sb.from('campaigns').select('status, budget');
+    const { data: frees } = await sb.from('freelancers').select('id');
+    const active = camps?.filter(c => c.status === 'active').length || 0;
+    const completed = camps?.filter(c => c.status === 'completed').length || 0;
+    const totalBudget = camps?.reduce((sum, c) => sum + (Number(c.budget) || 0), 0) || 0;
+    document.getElementById('statActive').textContent = active;
+    document.getElementById('statCompleted').textContent = completed;
+    document.getElementById('statFreelancers').textContent = frees?.length || 0;
+    document.getElementById('statBudget').textContent = totalBudget ? '₹' + (totalBudget/100000).toFixed(1) + 'L' : '₹0';
+  }
+
+  async function loadTasks() {
+    const { data, error } = await sb.from('tasks').select('*').order('created_at', { ascending: false });
+    const el = document.getElementById('tasksList');
+    if (!el) return;
+    if (error || !data?.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No tasks yet</div><div class="empty-sub">Tasks will appear here once you create a campaign and the AI breaks it down.</div></div>`;
+      return;
+    }
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;">${data.map(t => `
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--ink)">${t.title || 'Untitled Task'}</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-top:3px">${t.role || 'No role'} · ₹${t.budget ? Number(t.budget).toLocaleString('en-IN') : '—'}</div>
+        </div>
+        <span class="status-pill status-${t.status || 'pending'}">${t.status || 'pending'}</span>
+      </div>`).join('')}</div>`;
+  }
+
+  async function loadFreelancers() {
+    const { data, error } = await sb.from('freelancers').select('*').order('score', { ascending: false });
+    const el = document.getElementById('freelancersList');
+    if (!el) return;
+    if (error || !data?.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No freelancers yet</div><div class="empty-sub">Add freelancers manually or wait for the AI Matcher to source and vet talent automatically.</div><button class="btn btn-outline" onclick="openAddFreelancer()">+ Add Freelancer</button></div>`;
+      return;
+    }
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;">${data.map(f => `
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;flex-shrink:0;">${(f.name||'?')[0].toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600;color:var(--ink)">${f.name || 'Unknown'}</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-top:2px">${f.role || 'No role'} · ${f.email || ''}</div>
+        </div>
+        ${f.score ? `<div style="font-size:13px;font-weight:600;color:var(--amber)">${f.score}/10</div>` : ''}
+        <span class="status-pill status-${f.status || 'draft'}">${f.status || 'available'}</span>
+      </div>`).join('')}</div>`;
+  }
+
+  // ── CAMPAIGNS ──
+  function openNewCampaign() { document.getElementById('campaignModal').classList.add('show'); }
+
+  async function saveCampaign() {
+    const title = document.getElementById('campTitle').value.trim();
+    const brief = document.getElementById('campBrief').value.trim();
+    const budget = document.getElementById('campBudget').value;
+    const deadline = document.getElementById('campDeadline').value;
+    if (!title) { showToast('Please enter a campaign title', 'error'); return; }
+    const btn = document.getElementById('saveCampaignBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Creating...';
+    const { error } = await sb.from('campaigns').insert([{
+      user_id: currentUser.id, title, brief, budget: budget || null,
+      deadline: deadline || null, status: 'draft'
+    }]);
+    btn.disabled = false;
+    btn.innerHTML = 'Create Campaign';
+    if (error) { showToast('Error creating campaign: ' + error.message, 'error'); return; }
+    closeModal('campaignModal');
+    showToast('Campaign created! 🎯', 'success');
+    document.getElementById('campTitle').value = '';
+    document.getElementById('campBrief').value = '';
+    document.getElementById('campBudget').value = '';
+    document.getElementById('campDeadline').value = '';
+    loadDashboard();
+  }
+
+  // ── FREELANCERS ──
+  function openAddFreelancer() {
+    document.getElementById('freelancerModal').classList.add('show');
+    showSection('freelancers');
+  }
+
+  async function saveFreelancer() {
+    const name = document.getElementById('flName').value.trim();
+    const role = document.getElementById('flRole').value.trim();
+    const email = document.getElementById('flEmail').value.trim();
+    if (!name || !role) { showToast('Please enter name and role', 'error'); return; }
+    const btn = document.getElementById('saveFreelancerBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Adding...';
+    const { error } = await sb.from('freelancers').insert([{ name, role, email, status: 'available' }]);
+    btn.disabled = false;
+    btn.innerHTML = 'Add to Pool';
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    closeModal('freelancerModal');
+    showToast('Freelancer added! 👥', 'success');
+    document.getElementById('flName').value = '';
+    document.getElementById('flRole').value = '';
+    document.getElementById('flEmail').value = '';
+    loadFreelancers(); loadStats();
+  }
+
+  // ── NAV ──
+  function showSection(name) {
+    ['campaigns','tasks','freelancers','agents'].forEach(s => {
+      document.getElementById('section-' + s).style.display = s === name ? '' : 'none';
+    });
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    event?.currentTarget?.classList.add('active');
+    const titles = { campaigns: 'Campaigns', tasks: 'Tasks', freelancers: 'Freelancers', agents: 'Agent Status' };
+    document.getElementById('topbarTitle').textContent = titles[name] || name;
+  }
+
+  // ── AUTH ──
+  async function handleLogout() {
+    await sb.auth.signOut();
+    window.location.href = '/';
+  }
+
+  // ── MODAL ──
+  function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+  });
+
+  // ── TOAST ──
+  function showToast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type + ' show';
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  init();
+</script>
+</body>
+</html>
