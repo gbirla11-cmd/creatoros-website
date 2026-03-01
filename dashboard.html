@@ -523,15 +523,19 @@ Rules:
     btn.innerHTML = 'Create Campaign';
     if (error) { showToast('Error creating campaign: ' + error.message, 'error'); return; }
     closeModal('campaignModal');
-    showToast('Campaign created! 🎯', 'success');
     document.getElementById('campTitle').value = '';
     document.getElementById('campBrief').value = '';
     document.getElementById('campBudget').value = '';
     document.getElementById('campDeadline').value = '';
-    loadDashboard();
+    await loadDashboard();
     // Fire the Decomposer Agent
-    if (data && data[0]) {
-      await runDecomposerAgent(data[0].id, title, brief, budget);
+    const campaignId = data?.[0]?.id;
+    console.log('Campaign created:', campaignId, 'firing agent...');
+    if (campaignId) {
+      await runDecomposerAgent(campaignId, title, brief, budget);
+    } else {
+      console.error('No campaign ID returned from insert');
+      showToast('Campaign saved but agent could not start — no ID returned', 'error');
     }
   }
 
