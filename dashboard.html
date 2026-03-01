@@ -392,6 +392,7 @@
           <div class="meta-item">💰 ₹${c.budget ? Number(c.budget).toLocaleString('en-IN') : '—'}</div>
           <div class="meta-item">📅 ${c.deadline || 'No deadline'}</div>
         </div>
+        <button onclick="runDecomposerAgent('${c.id}', this.dataset.title, this.dataset.brief, '${c.budget||''}')" data-title="${c.title||''}" data-brief="${c.brief||''}" style="margin-top:12px;width:100%;padding:9px;background:var(--ink);color:var(--cream);border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">🤖 Run Decomposer Agent</button>
       </div>`).join('')}</div>`;
   }
 
