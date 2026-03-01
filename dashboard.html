@@ -264,8 +264,8 @@
           </div>
         </div>
         <div class="agent-grid">
-          <div class="agent-card"><div class="agent-dot idle"></div><div><div class="agent-name">Orchestrator</div><div class="agent-status">Idle — waiting for campaign</div></div></div>
-          <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Decomposer</div><div class="agent-status">Not yet deployed</div></div></div>
+          <div class="agent-card"><div class="agent-dot online"></div><div><div class="agent-name">Orchestrator</div><div class="agent-status">Online — coordinating agents</div></div></div>
+          <div class="agent-card"><div class="agent-dot online"></div><div><div class="agent-name">Decomposer</div><div class="agent-status">Active — fires on new campaign</div></div></div>
           <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Matcher</div><div class="agent-status">Not yet deployed</div></div></div>
           <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Scorer</div><div class="agent-status">Not yet deployed</div></div></div>
           <div class="agent-card"><div class="agent-dot offline"></div><div><div class="agent-name">Contract Agent</div><div class="agent-status">Not yet deployed</div></div></div>
@@ -448,6 +448,64 @@
   // ── CAMPAIGNS ──
   function openNewCampaign() { document.getElementById('campaignModal').classList.add('show'); }
 
+  // ── DECOMPOSER AGENT ──
+  async function runDecomposerAgent(campaignId, title, brief, budget) {
+    showToast('🤖 Decomposer Agent is analysing your brief...', 'success');
+    const prompt = `You are the Decomposer Agent for CreatorOS, an AI platform for Indian content creators.
+
+A creator has submitted a campaign brief. Break it down into specific tasks needed to execute this campaign.
+
+Campaign Title: ${title}
+Brief: ${brief}
+Total Budget: ₹${budget || 'not specified'}
+
+Return ONLY a valid JSON array of tasks. No explanation, no markdown, just raw JSON like this:
+[
+  {
+    "title": "Task name",
+    "role": "Role needed (e.g. Video Editor, Scriptwriter, Thumbnail Designer, Voiceover Artist)",
+    "budget": 5000,
+    "status": "pending"
+  }
+]
+
+Rules:
+- Create 2-5 tasks based on the brief
+- Split the budget across tasks realistically (numbers only, no ₹ symbol)
+- Be specific about roles relevant to Indian content creation
+- If budget is not specified, estimate reasonable amounts in INR`;
+
+    try {
+      const response = await fetch('/api/decompose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, brief, budget })
+      });
+
+      const data = await response.json();
+      if (!response.ok) { showToast('Agent error: ' + data.error, 'error'); return; }
+      const tasks = data.tasks;
+
+      // Save each task to Supabase
+      const taskRows = tasks.map(t => ({
+        campaign_id: campaignId,
+        title: t.title,
+        role: t.role,
+        budget: t.budget || null,
+        status: t.status || 'pending'
+      }));
+
+      const { error } = await sb.from('tasks').insert(taskRows);
+      if (error) { showToast('Tasks could not be saved: ' + error.message, 'error'); return; }
+      showToast(`✅ Agent created ${tasks.length} tasks automatically!`, 'success');
+      loadTasks();
+      loadStats();
+    } catch (err) {
+      showToast('Agent error: ' + err.message, 'error');
+      console.error('Decomposer error:', err);
+    }
+  }
+
   async function saveCampaign() {
     const title = document.getElementById('campTitle').value.trim();
     const brief = document.getElementById('campBrief').value.trim();
@@ -457,10 +515,10 @@
     const btn = document.getElementById('saveCampaignBtn');
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Creating...';
-    const { error } = await sb.from('campaigns').insert([{
+    const { data, error } = await sb.from('campaigns').insert([{
       user_id: currentUser.id, title, brief, budget: budget || null,
-      deadline: deadline || null, status: 'draft'
-    }]);
+      deadline: deadline || null, status: 'active'
+    }]).select();
     btn.disabled = false;
     btn.innerHTML = 'Create Campaign';
     if (error) { showToast('Error creating campaign: ' + error.message, 'error'); return; }
@@ -471,6 +529,10 @@
     document.getElementById('campBudget').value = '';
     document.getElementById('campDeadline').value = '';
     loadDashboard();
+    // Fire the Decomposer Agent
+    if (data && data[0]) {
+      await runDecomposerAgent(data[0].id, title, brief, budget);
+    }
   }
 
   // ── FREELANCERS ──
