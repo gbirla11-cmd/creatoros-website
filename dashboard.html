@@ -162,6 +162,9 @@
     <a class="nav-item" onclick="showSection('budget')">
       <div class="nav-icon">💰</div> Budget
     </a>
+    <a class="nav-item" onclick="showSection('applications')">
+      <div class="nav-icon">📥</div> Applications
+    </a>
     <div class="nav-section-label">AI Agents</div>
     <a class="nav-item" onclick="showSection('agents')">
       <div class="nav-icon">🤖</div> Agent Status
@@ -480,6 +483,66 @@
       </div>`).join('')}</div>`;
   }
 
+  // ── APPLICATIONS ──
+  async function loadApplications() {
+    const { data, error } = await sb.from('freelancers')
+      .select('*')
+      .in('status', ['pending_approval', 'under_review'])
+      .order('score', { ascending: false });
+    const el = document.getElementById('applicationsList');
+    if (!el) return;
+    if (error || !data?.length) {
+      el.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">📥</div>
+        <div class="empty-title">No applications yet</div>
+        <div class="empty-sub">Share your freelancer application link to start receiving applications. AI will score each one automatically.</div>
+        <a href="/freelancer.html" target="_blank" class="btn btn-amber" style="text-decoration:none;">View Application Form ↗</a>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px;">${data.map(f => `
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px 24px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px;flex-shrink:0;">${(f.name||'?')[0].toUpperCase()}</div>
+            <div>
+              <div style="font-size:15px;font-weight:700;color:var(--ink)">${f.name}</div>
+              <div style="font-size:12px;color:var(--ink-3);margin-top:2px;">${f.role} · ${f.experience || '—'} yrs · ₹${f.rate ? Number(f.rate).toLocaleString('en-IN') : '—'}/project</div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:22px;font-weight:800;color:${f.score >= 8 ? '#27AE60' : f.score >= 6 ? '#D4820A' : '#C0392B'};">${f.score}/10</div>
+            <div style="font-size:10px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;">AI Score</div>
+          </div>
+        </div>
+        ${f.bio ? `<div style="font-size:13px;color:var(--ink-3);line-height:1.55;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${f.bio}</div>` : ''}
+        ${f.ai_feedback ? `<div style="font-size:12px;color:var(--ink-2);background:var(--cream-2);padding:8px 12px;border-radius:6px;margin-bottom:12px;">🤖 ${f.ai_feedback}</div>` : ''}
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          ${f.portfolio_url ? `<a href="${f.portfolio_url}" target="_blank" style="font-size:12px;color:var(--amber);font-weight:600;text-decoration:none;">View Portfolio ↗</a>` : ''}
+          ${f.niches ? `<span style="font-size:11px;background:var(--cream-2);color:var(--ink-3);padding:3px 8px;border-radius:4px;">${f.niches}</span>` : ''}
+          <div style="flex:1;"></div>
+          <button onclick="approveFreelancer('${f.id}')" style="padding:8px 16px;background:#27AE60;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✓ Approve</button>
+          <button onclick="rejectFreelancer('${f.id}')" style="padding:8px 16px;background:none;color:#C0392B;border:1.5px solid #C0392B;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✗ Reject</button>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  async function approveFreelancer(id) {
+    const { error } = await sb.from('freelancers').update({ status: 'available' }).eq('id', id);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('Freelancer approved and added to pool! ✓', 'success');
+    loadApplications();
+    loadStats();
+  }
+
+  async function rejectFreelancer(id) {
+    if (!confirm('Reject this application?')) return;
+    const { error } = await sb.from('freelancers').update({ status: 'rejected' }).eq('id', id);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('Application rejected', 'success');
+    loadApplications();
+  }
+
   // ── BUDGET TRACKER ──
   async function loadBudget() {
     const { data: campaigns } = await sb.from('campaigns').select('id, title, budget, status');
@@ -749,12 +812,13 @@ Rules:
 
   // ── NAV ──
   function showSection(name) {
-    ['campaigns','tasks','freelancers','agents','budget'].forEach(s => {
+    ['campaigns','tasks','freelancers','agents','budget','applications'].forEach(s => {
       document.getElementById('section-' + s).style.display = s === name ? '' : 'none';
     });
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     event?.currentTarget?.classList.add('active');
-    const titles = { campaigns: 'Campaigns', tasks: 'Tasks', freelancers: 'Freelancers', agents: 'Agent Status', budget: 'Budget Tracker' };
+    const titles = { campaigns: 'Campaigns', tasks: 'Tasks', freelancers: 'Freelancers', agents: 'Agent Status', budget: 'Budget Tracker', applications: 'Freelancer Applications' };
+    if (name === 'applications') loadApplications();
     if (name === 'budget') loadBudget();
     document.getElementById('topbarTitle').textContent = titles[name] || name;
   }
