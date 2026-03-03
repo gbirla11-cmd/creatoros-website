@@ -382,6 +382,20 @@
   </div>
 </div>
 
+<!-- ── CONTRACT MODAL ── -->
+<div class="modal-overlay" id="contractModal">
+  <div class="modal" style="max-width:640px;">
+    <button class="modal-close" onclick="closeModal('contractModal')">×</button>
+    <div class="modal-title">Statement of Work</div>
+    <div class="modal-sub" id="contractMeta">AI-generated contract</div>
+    <div id="contractContent" style="background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:20px;font-size:13px;color:var(--ink-2);line-height:1.7;max-height:380px;overflow-y:auto;margin-bottom:20px;white-space:pre-wrap;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-amber" id="sendContractBtn" onclick="sendContract()" style="flex:1;">📧 Send to Freelancer</button>
+      <button class="btn btn-outline" onclick="closeModal('contractModal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── TOAST ── -->
 <div class="toast" id="toast"></div>
 
@@ -473,6 +487,7 @@
           <option value="completed" ${t.status === 'completed' ? 'selected' : ''}>completed</option>
         </select>
         <button onclick="deleteTask('${t.id}')" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:20px;padding:2px 6px;line-height:1;flex-shrink:0;border-radius:4px;" onmouseover="this.style.color='#C0392B'" onmouseout="this.style.color='#ccc'" title="Delete">×</button>
+        \${t.status === 'assigned' && t.assigned_to ? `<button onclick="generateContract('\${t.id}', '\${(t.title||'').replace(/'/g,'')}', '\${t.role||''}', '\${t.budget||''}', '\${t.assigned_to||''}', '\${t.assigned_email||''}')" style="padding:6px 12px;background:#18160F;color:#F7F4EE;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">📋 Contract</button>` : ''}
       </div>`).join('')}</div>`;
   }
 
@@ -845,6 +860,78 @@ Rules:
     if (name === 'applications') loadApplications();
     if (name === 'budget') loadBudget();
     document.getElementById('topbarTitle').textContent = titles[name] || name;
+  }
+
+  // ── CONTRACT AGENT ──
+  let currentContract = null;
+  let currentContractEmail = null;
+  let currentContractFreelancer = null;
+  let currentContractTask = null;
+
+  async function generateContract(taskId, taskTitle, taskRole, taskBudget, freelancerName, freelancerEmail) {
+    currentContractEmail = freelancerEmail;
+    currentContractFreelancer = freelancerName;
+    currentContractTask = taskTitle;
+    document.getElementById('contractMeta').textContent = 'For ' + freelancerName + ' · ' + taskTitle;
+    document.getElementById('contractContent').textContent = '🤖 Generating contract...';
+    document.getElementById('sendContractBtn').disabled = true;
+    document.getElementById('contractModal').classList.add('show');
+    let campaignTitle = 'Campaign';
+    try {
+      const { data: task } = await sb.from('tasks').select('campaign_id').eq('id', taskId).single();
+      if (task?.campaign_id) {
+        const { data: camp } = await sb.from('campaigns').select('title').eq('id', task.campaign_id).single();
+        if (camp) campaignTitle = camp.title;
+      }
+      const response = await fetch('/api/generate-contract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskTitle, taskRole, taskBudget, freelancerName,
+          freelancerEmail, campaignTitle,
+          creatorName: document.getElementById('userName').textContent,
+          deadline: ''
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      currentContract = data.contract;
+      document.getElementById('contractContent').textContent = data.contract.replace(/\*\*(.*?)\*\*/g, '[$1]');
+      document.getElementById('sendContractBtn').disabled = false;
+      showToast('Contract generated! 📋', 'success');
+    } catch (err) {
+      document.getElementById('contractContent').textContent = 'Error: ' + err.message;
+    }
+  }
+
+  async function sendContract() {
+    if (!currentContract || !currentContractEmail) return;
+    const btn = document.getElementById('sendContractBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Sending...';
+    try {
+      const { data: camps } = await sb.from('campaigns').select('title').limit(1);
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: currentContractEmail,
+          freelancerName: currentContractFreelancer,
+          taskTitle: currentContractTask,
+          campaignTitle: camps?.[0]?.title || 'Campaign',
+          contract: currentContract,
+          creatorName: document.getElementById('userName').textContent
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      showToast('Contract sent to ' + currentContractFreelancer + '! 📧', 'success');
+      closeModal('contractModal');
+    } catch (err) {
+      showToast('Email error: ' + err.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = '📧 Send to Freelancer';
+    }
   }
 
   // ── AUTH ──
