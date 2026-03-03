@@ -392,7 +392,7 @@
           <div class="meta-item">💰 ₹${c.budget ? Number(c.budget).toLocaleString('en-IN') : '—'}</div>
           <div class="meta-item">📅 ${c.deadline || 'No deadline'}</div>
         </div>
-        <button onclick="runDecomposerAgent('${c.id}', this.dataset.title, this.dataset.brief, '${c.budget||''}')" data-title="${c.title||''}" data-brief="${c.brief||''}" style="margin-top:12px;width:100%;padding:9px;background:var(--ink);color:var(--cream);border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">🤖 Run Decomposer Agent</button>
+
       </div>`).join('')}</div>`;
   }
 
@@ -528,15 +528,16 @@ Rules:
     document.getElementById('campBrief').value = '';
     document.getElementById('campBudget').value = '';
     document.getElementById('campDeadline').value = '';
+    showToast('Campaign created! 🎯 AI is analysing your brief...', 'success');
     await loadDashboard();
-    // Fire the Decomposer Agent
+    // Auto-fire the Decomposer Agent
     const campaignId = data?.[0]?.id;
-    console.log('Campaign created:', campaignId, 'firing agent...');
     if (campaignId) {
+      // Switch to Tasks tab so user sees tasks appear
+      showSection('tasks');
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelector('.nav-item:nth-child(2)').classList.add('active');
       await runDecomposerAgent(campaignId, title, brief, budget);
-    } else {
-      console.error('No campaign ID returned from insert');
-      showToast('Campaign saved but agent could not start — no ID returned', 'error');
     }
   }
 
