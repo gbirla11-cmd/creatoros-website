@@ -480,6 +480,7 @@
         ${f.portfolio_url ? `<a href="${f.portfolio_url}" target="_blank" style="font-size:12px;color:var(--amber);text-decoration:none;font-weight:500;flex-shrink:0;">View Portfolio ↗</a>` : ''}
         ${f.score ? `<div style="font-size:13px;font-weight:600;color:var(--amber)">${f.score}/10</div>` : ''}
         <span class="status-pill status-${f.status || 'draft'}">${f.status || 'available'}</span>
+        <button onclick="deleteFreelancer('${f.id}')" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:20px;padding:2px 6px;line-height:1;flex-shrink:0;border-radius:4px;" onmouseover="this.style.color='#C0392B'" onmouseout="this.style.color='#ccc'" title="Remove">×</button>
       </div>`).join('')}</div>`;
   }
 
@@ -525,6 +526,15 @@
           <button onclick="rejectFreelancer('${f.id}')" style="padding:8px 16px;background:none;color:#C0392B;border:1.5px solid #C0392B;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✗ Reject</button>
         </div>
       </div>`).join('')}</div>`;
+  }
+
+  async function deleteFreelancer(id) {
+    if (!confirm('Remove this freelancer from the pool?')) return;
+    const { error } = await sb.from('freelancers').delete().eq('id', id);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('Freelancer removed', 'success');
+    loadFreelancers();
+    loadStats();
   }
 
   async function approveFreelancer(id) {
