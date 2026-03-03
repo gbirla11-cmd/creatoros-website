@@ -237,6 +237,7 @@
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-outline" onclick="selectAllTasks()" style="font-size:12px;padding:7px 14px;">Select All</button>
+            <button class="btn btn-outline" onclick="deleteSelectedTasks()" style="font-size:12px;padding:7px 14px;color:#C0392B;border-color:#C0392B;">🗑 Delete Selected</button>
             <button class="btn btn-amber" onclick="runMatcherAgent()">🤖 Run Matcher Agent</button>
           </div>
         </div>
@@ -550,9 +551,21 @@ Rules:
 
   // ── TASK ACTIONS ──
   async function deleteTask(id) {
+    if (!confirm('Delete this task?')) return;
     const { error } = await sb.from('tasks').delete().eq('id', id);
-    if (error) { showToast('Could not delete task', 'error'); return; }
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
     showToast('Task deleted', 'success');
+    loadTasks();
+    loadStats();
+  }
+
+  async function deleteSelectedTasks() {
+    const checked = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(c => c.dataset.id);
+    if (!checked.length) { showToast('No tasks selected', 'error'); return; }
+    if (!confirm(`Delete ${checked.length} selected task(s)?`)) return;
+    const { error } = await sb.from('tasks').delete().in('id', checked);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast(`Deleted ${checked.length} task(s)`, 'success');
     loadTasks();
     loadStats();
   }
