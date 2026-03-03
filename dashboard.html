@@ -233,9 +233,12 @@
         <div class="section-header">
           <div>
             <div class="section-title">Tasks</div>
-            <div class="section-sub">All tasks across your campaigns</div>
+            <div class="section-sub">Check tasks to match, then run agent</div>
           </div>
-          <button class="btn btn-amber" onclick="runMatcherAgent()">🤖 Run Matcher Agent</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-outline" onclick="selectAllTasks()" style="font-size:12px;padding:7px 14px;">Select All</button>
+            <button class="btn btn-amber" onclick="runMatcherAgent()">🤖 Run Matcher Agent</button>
+          </div>
         </div>
         <div id="tasksList"><div class="loading"><div class="loading-spinner"></div></div></div>
       </div>
@@ -542,14 +545,35 @@ Rules:
     }
   }
 
+  // ── TASK ACTIONS ──
+  async function deleteTask(id) {
+    const { error } = await sb.from('tasks').delete().eq('id', id);
+    if (error) { showToast('Could not delete task', 'error'); return; }
+    showToast('Task deleted', 'success');
+    loadTasks();
+    loadStats();
+  }
+
+  function selectAllTasks() {
+    const checkboxes = document.querySelectorAll('.task-checkbox:not(:disabled)');
+    const allChecked = Array.from(checkboxes).every(c => c.checked);
+    checkboxes.forEach(c => c.checked = !allChecked);
+  }
+
   // ── MATCHER AGENT ──
   async function runMatcherAgent() {
+    // Get selected task IDs from checkboxes
+    const checked = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(c => c.dataset.id);
+    
     showToast('🤖 Matcher Agent is finding the best freelancers...', 'success');
 
-    // Get all pending tasks
-    const { data: tasks, error: tasksError } = await sb.from('tasks').select('*').eq('status', 'pending');
+    // Get selected or all pending tasks
+    let tasksQuery = sb.from('tasks').select('*').eq('status', 'pending');
+    if (checked.length > 0) tasksQuery = sb.from('tasks').select('*').in('id', checked);
+    
+    const { data: tasks, error: tasksError } = await tasksQuery;
     if (tasksError || !tasks?.length) {
-      showToast('No pending tasks to match', 'error');
+      showToast('No tasks selected or available', 'error');
       return;
     }
 
