@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apply for Early Access — CreatorOS</title>
+  <title>Request a Demo — CreatorOS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -126,13 +126,13 @@
 </nav>
 
 <div class="hero">
-  <div class="spots-badge"><div class="spots-dot"></div> 7 of 10 founding spots remaining</div>
-  <h1>Apply for<br/><em>founding creator</em><br/>access.</h1>
-  <p>We're onboarding 10 Instagram creators doing ₹3L+ per month. You get lifetime pricing and a dedicated AI manager setup.</p>
+  <div class="spots-badge"><div class="spots-dot"></div> Now booking demo calls</div>
+  <h1>See CreatorOS<br/><em>in action.</em></h1>
+  <p>Book a 20-minute demo and see how CreatorOS manages your freelancers, tracks your budget, and runs your content ops — automatically.</p>
   <div class="hero-proof">
-    <div class="proof-item"><div class="proof-value">₹0</div><div class="proof-label">Platform fee to start</div></div>
+    <div class="proof-item"><div class="proof-value">20</div><div class="proof-label">Minute demo call</div></div>
     <div class="proof-item"><div class="proof-value">48hr</div><div class="proof-label">Response time</div></div>
-    <div class="proof-item"><div class="proof-value">10</div><div class="proof-label">Founding spots only</div></div>
+    <div class="proof-item"><div class="proof-value">Free</div><div class="proof-label">No commitment</div></div>
   </div>
 </div>
 
@@ -140,9 +140,9 @@
   <div class="form-card">
 
     <div id="formScreen">
-      <div class="form-eyebrow">Founding Creator Application</div>
-      <div class="form-title">Tell us about yourself.</div>
-      <div class="form-sub">Takes 3 minutes. We read every application personally and respond within 48 hours.</div>
+      <div class="form-eyebrow">Demo Request</div>
+      <div class="form-title">Book your demo.</div>
+      <div class="form-sub">Fill this in and we will schedule a 20-minute demo call at your convenience. No sales pitch — just a live walkthrough of the product.</div>
 
       <div class="section-label">Basic Info</div>
       <div class="field-row">
@@ -270,17 +270,17 @@
       </div>
 
       <button class="submit-btn" id="submitBtn" onclick="submitApplication()">
-        Submit Application →
+        Request Demo →
       </button>
-      <div class="submit-note">No credit card needed · We'll respond within 48 hours · Only 10 spots</div>
+      <div class="submit-note">No credit card needed · No commitment · We respond within 24 hours</div>
     </div>
 
     <!-- SUCCESS -->
     <div class="success-screen" id="successScreen">
       <span class="success-icon">🎉</span>
-      <div class="success-tag">Application received</div>
-      <div class="success-title">You're in the queue.</div>
-      <div class="success-sub">Welcome to the future of content ops. While others hustle alone, you're about to have an entire AI team working for you. We'll be in touch within 48 hours.</div>
+      <div class="success-tag">Demo request received ✓</div>
+      <div class="success-title">We'll be in touch.</div>
+      <div class="success-sub">Welcome to the future of content ops. While others hustle alone, you're about to have an entire AI team working for you. We'll reach out within 24 hours to schedule your demo.</div>
       <a href="/" style="display:inline-block;padding:14px 32px;background:var(--ink);color:var(--cream);border-radius:10px;text-decoration:none;font-size:14px;font-weight:700;">Back to CreatorOS</a>
     </div>
 
@@ -288,11 +288,11 @@
 </div>
 
 <div class="why">
-  <div class="why-title">What founding creators get</div>
+  <div class="why-title">What you'll see in the demo</div>
   <div class="why-grid">
-    <div class="why-card"><div class="why-icon">🤖</div><div class="why-title-sm">Dedicated AI Manager</div><div class="why-sub">Custom-configured for your content workflow and team.</div></div>
-    <div class="why-card"><div class="why-icon">💎</div><div class="why-title-sm">Lifetime Pricing</div><div class="why-sub">Lock in founding rates forever. Price never increases.</div></div>
-    <div class="why-card"><div class="why-icon">🎯</div><div class="why-title-sm">Priority Matching</div><div class="why-sub">First access to our vetted freelancer pool as it grows.</div></div>
+    <div class="why-card"><div class="why-icon">🤖</div><div class="why-title-sm">AI Agent Walkthrough</div><div class="why-sub">See all 7 agents running live on a real campaign.</div></div>
+    <div class="why-card"><div class="why-icon">💎</div><div class="why-title-sm">Live Dashboard</div><div class="why-sub">See how your campaigns, tasks and budget look in real time.</div></div>
+    <div class="why-card"><div class="why-icon">🎯</div><div class="why-title-sm">Your Questions Answered</div><div class="why-sub">Ask anything — pricing, integrations, how it fits your workflow.</div></div>
   </div>
 </div>
 
@@ -345,7 +345,7 @@
 
     } catch (err) {
       btn.disabled = false;
-      btn.innerHTML = 'Submit Application →';
+      btn.innerHTML = 'Request Demo →';
       alert('Error submitting: ' + err.message);
     }
   }
