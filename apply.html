@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apply for Early Access — CreatorOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream: #F7F4EE; --cream-2: #EDE9DF; --ink: #18160F;
+      --ink-2: #3D3A30; --ink-3: #7A7669; --amber: #D4820A;
+      --amber-l: #F5A623; --white: #FFFFFF; --border: #DDD8CE;
+      --green: #27AE60; --green-l: #EAFAF1;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+    /* NAV */
+    nav { background: var(--ink); padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .nav-logo { font-family: 'DM Serif Display', serif; font-size: 20px; color: #fff; text-decoration: none; }
+    .nav-logo span { color: var(--amber-l); }
+    .nav-link { font-size: 13px; color: rgba(255,255,255,.5); text-decoration: none; transition: color .2s; }
+    .nav-link:hover { color: #fff; }
+
+    /* HERO */
+    .hero { background: var(--ink); padding: 72px 32px 100px; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(212,130,10,.12) 0%, transparent 70%); pointer-events: none; }
+    .spots-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(212,130,10,.12); color: var(--amber-l); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 7px 16px; border-radius: 100px; margin-bottom: 24px; border: 1px solid rgba(212,130,10,.25); }
+    .spots-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber-l); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+    .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(36px, 6vw, 64px); color: #fff; line-height: 1.1; margin-bottom: 20px; max-width: 700px; margin-left: auto; margin-right: auto; }
+    .hero h1 em { color: var(--amber-l); font-style: italic; }
+    .hero p { font-size: 17px; color: rgba(255,255,255,.55); max-width: 500px; margin: 0 auto 40px; line-height: 1.65; font-weight: 300; }
+    .hero-proof { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; }
+    .proof-item { text-align: center; }
+    .proof-value { font-family: 'DM Serif Display', serif; font-size: 32px; color: #fff; line-height: 1; }
+    .proof-label { font-size: 12px; color: rgba(255,255,255,.35); margin-top: 4px; letter-spacing: .04em; }
+
+    /* FORM CARD */
+    .form-wrap { max-width: 640px; margin: -48px auto 64px; padding: 0 20px; position: relative; z-index: 10; }
+    .form-card { background: var(--white); border-radius: 20px; padding: 44px; box-shadow: 0 32px 80px rgba(0,0,0,.14); }
+    .form-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin-bottom: 8px; }
+    .form-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--ink); margin-bottom: 6px; }
+    .form-sub { font-size: 14px; color: var(--ink-3); margin-bottom: 32px; line-height: 1.55; font-weight: 300; }
+    .section-label { font-size: 10px; font-weight: 800; color: var(--ink-3); text-transform: uppercase; letter-spacing: .14em; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .field label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+    .field input, .field select, .field textarea {
+      font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 12px 16px;
+      border: 1.5px solid var(--border); border-radius: 10px; background: var(--cream);
+      color: var(--ink); outline: none; transition: all .2s; width: 100%;
+    }
+    .field textarea { resize: vertical; min-height: 90px; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--amber); background: var(--white); box-shadow: 0 0 0 3px rgba(212,130,10,.08); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field-hint { font-size: 11px; color: var(--ink-3); margin-top: 3px; line-height: 1.4; }
+    .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+    /* REVENUE SELECTOR */
+    .revenue-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .revenue-option { display: none; }
+    .revenue-label {
+      display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+      border: 1.5px solid var(--border); border-radius: 10px; cursor: pointer;
+      font-size: 13px; color: var(--ink-3); transition: all .2s; background: var(--cream);
+    }
+    .revenue-label:hover { border-color: var(--amber); color: var(--ink); }
+    .revenue-option:checked + .revenue-label { border-color: var(--amber); background: rgba(212,130,10,.06); color: var(--ink); font-weight: 600; }
+    .revenue-icon { font-size: 18px; }
+
+    /* PAIN POINTS */
+    .pain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pain-option { display: none; }
+    .pain-label {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer;
+      font-size: 12px; color: var(--ink-3); transition: all .2s; background: var(--cream); line-height: 1.4;
+    }
+    .pain-label:hover { border-color: var(--amber); color: var(--ink); }
+    .pain-option:checked + .pain-label { border-color: var(--amber); background: rgba(212,130,10,.06); color: var(--ink); font-weight: 600; }
+
+    /* SUBMIT */
+    .submit-btn {
+      width: 100%; padding: 16px; background: var(--amber); color: #fff;
+      border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+      font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .2s; margin-top: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .submit-btn:hover:not(:disabled) { background: #c0740a; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212,130,10,.3); }
+    .submit-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; }
+    .submit-note { text-align: center; font-size: 11px; color: var(--ink-3); margin-top: 10px; }
+    .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* SUCCESS */
+    .success-screen { display: none; text-align: center; padding: 48px 20px; }
+    .success-icon { font-size: 64px; margin-bottom: 20px; display: block; }
+    .success-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 12px; }
+    .success-sub { font-size: 15px; color: var(--ink-3); line-height: 1.65; font-weight: 300; max-width: 420px; margin: 0 auto 28px; }
+    .success-tag { display: inline-block; background: var(--green-l); color: var(--green); font-size: 13px; font-weight: 700; padding: 8px 20px; border-radius: 100px; margin-bottom: 24px; }
+
+    /* WHY */
+    .why { max-width: 640px; margin: 0 auto 64px; padding: 0 20px; }
+    .why-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--ink); text-align: center; margin-bottom: 20px; }
+    .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .why-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 22px 18px; text-align: center; }
+    .why-icon { font-size: 32px; margin-bottom: 10px; }
+    .why-title-sm { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+    .why-sub { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+
+    @media (max-width: 580px) {
+      .field-row, .revenue-grid, .pain-grid, .why-grid { grid-template-columns: 1fr; }
+      .form-card { padding: 28px 20px; }
+      .hero-proof { gap: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">Creator<span>OS</span></a>
+  <a class="nav-link" href="/">← Back</a>
+</nav>
+
+<div class="hero">
+  <div class="spots-badge"><div class="spots-dot"></div> 7 of 10 founding spots remaining</div>
+  <h1>Apply for<br/><em>founding creator</em><br/>access.</h1>
+  <p>We're onboarding 10 Instagram creators doing ₹3L+ per month. You get lifetime pricing and a dedicated AI manager setup.</p>
+  <div class="hero-proof">
+    <div class="proof-item"><div class="proof-value">₹0</div><div class="proof-label">Platform fee to start</div></div>
+    <div class="proof-item"><div class="proof-value">48hr</div><div class="proof-label">Response time</div></div>
+    <div class="proof-item"><div class="proof-value">10</div><div class="proof-label">Founding spots only</div></div>
+  </div>
+</div>
+
+<div class="form-wrap">
+  <div class="form-card">
+
+    <div id="formScreen">
+      <div class="form-eyebrow">Founding Creator Application</div>
+      <div class="form-title">Tell us about yourself.</div>
+      <div class="form-sub">Takes 3 minutes. We read every application personally and respond within 48 hours.</div>
+
+      <div class="section-label">Basic Info</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Your Name *</label>
+          <input type="text" id="name" placeholder="Aryan Kapoor" />
+        </div>
+        <div class="field">
+          <label>Email *</label>
+          <input type="email" id="email" placeholder="you@gmail.com" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Phone</label>
+          <input type="tel" id="phone" placeholder="+91 98765 43210" />
+        </div>
+        <div class="field">
+          <label>City</label>
+          <input type="text" id="city" placeholder="Mumbai" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-label">Your Instagram Presence</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Instagram Handle *</label>
+          <input type="text" id="instagram" placeholder="@yourhandle" />
+        </div>
+        <div class="field">
+          <label>Followers</label>
+          <input type="text" id="followers" placeholder="e.g. 150K" />
+        </div>
+      </div>
+      <div class="field">
+        <label>YouTube / Other Platform</label>
+        <input type="text" id="other_platform" placeholder="YouTube channel, podcast, etc." />
+      </div>
+      <div class="field">
+        <label>Content Niche *</label>
+        <input type="text" id="niche" placeholder="e.g. Finance, Skincare, Fitness, Comedy, Food" />
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-label">Your Revenue</div>
+
+      <div class="field">
+        <label>Monthly revenue from content (brand deals + all sources)</label>
+        <div class="revenue-grid">
+          <div>
+            <input type="radio" name="revenue" id="r1" value="1-3L" class="revenue-option" />
+            <label for="r1" class="revenue-label"><span class="revenue-icon">🌱</span> ₹1L – ₹3L/month</label>
+          </div>
+          <div>
+            <input type="radio" name="revenue" id="r2" value="3-7L" class="revenue-option" />
+            <label for="r2" class="revenue-label"><span class="revenue-icon">🚀</span> ₹3L – ₹7L/month</label>
+          </div>
+          <div>
+            <input type="radio" name="revenue" id="r3" value="7-15L" class="revenue-option" />
+            <label for="r3" class="revenue-label"><span class="revenue-icon">💰</span> ₹7L – ₹15L/month</label>
+          </div>
+          <div>
+            <input type="radio" name="revenue" id="r4" value="15L+" class="revenue-option" />
+            <label for="r4" class="revenue-label"><span class="revenue-icon">👑</span> ₹15L+/month</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-label">Your Biggest Pain Points</div>
+
+      <div class="field">
+        <label>What slows you down the most? (select all that apply)</label>
+        <div class="pain-grid">
+          <div>
+            <input type="checkbox" id="p1" value="Finding editors" class="pain-option" />
+            <label for="p1" class="pain-label">😤 Finding good editors</label>
+          </div>
+          <div>
+            <input type="checkbox" id="p2" value="Managing deadlines" class="pain-option" />
+            <label for="p2" class="pain-label">⏰ Managing deadlines</label>
+          </div>
+          <div>
+            <input type="checkbox" id="p3" value="Budget tracking" class="pain-option" />
+            <label for="p3" class="pain-label">💸 Tracking payments</label>
+          </div>
+          <div>
+            <input type="checkbox" id="p4" value="Brand deal execution" class="pain-option" />
+            <label for="p4" class="pain-label">🤝 Brand deal execution</label>
+          </div>
+          <div>
+            <input type="checkbox" id="p5" value="Scaling content" class="pain-option" />
+            <label for="p5" class="pain-label">📈 Scaling content output</label>
+          </div>
+          <div>
+            <input type="checkbox" id="p6" value="2am coordination" class="pain-option" />
+            <label for="p6" class="pain-label">🌙 Late night coordination</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-label">One Last Thing</div>
+
+      <div class="field">
+        <label>What's the most chaotic part of running your content business right now? *</label>
+        <textarea id="chaos" placeholder="Be specific — the more real this is, the better we can help. E.g. 'My editor disappears 2 days before a brand deal deadline and I have no backup...'"></textarea>
+        <div class="field-hint">This is the most important question. We use this to build your AI manager setup.</div>
+      </div>
+
+      <div class="field">
+        <label>How did you hear about CreatorOS?</label>
+        <select id="source">
+          <option value="">Select</option>
+          <option>Instagram</option>
+          <option>Friend / Referral</option>
+          <option>Twitter / X</option>
+          <option>LinkedIn</option>
+          <option>YouTube</option>
+          <option>Google Search</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitApplication()">
+        Submit Application →
+      </button>
+      <div class="submit-note">No credit card needed · We'll respond within 48 hours · Only 10 spots</div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="successScreen">
+      <span class="success-icon">🎉</span>
+      <div class="success-tag">Application received</div>
+      <div class="success-title">You're in the queue.</div>
+      <div class="success-sub">We read every application personally. If you're a good fit for the founding cohort, you'll hear from us within 48 hours with next steps.</div>
+      <a href="/" style="display:inline-block;padding:14px 32px;background:var(--ink);color:var(--cream);border-radius:10px;text-decoration:none;font-size:14px;font-weight:700;">Back to CreatorOS</a>
+    </div>
+
+  </div>
+</div>
+
+<div class="why">
+  <div class="why-title">What founding creators get</div>
+  <div class="why-grid">
+    <div class="why-card"><div class="why-icon">🤖</div><div class="why-title-sm">Dedicated AI Manager</div><div class="why-sub">Custom-configured for your content workflow and team.</div></div>
+    <div class="why-card"><div class="why-icon">💎</div><div class="why-title-sm">Lifetime Pricing</div><div class="why-sub">Lock in founding rates forever. Price never increases.</div></div>
+    <div class="why-card"><div class="why-icon">🎯</div><div class="why-title-sm">Priority Matching</div><div class="why-sub">First access to our vetted freelancer pool as it grows.</div></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://zvlrjyuvbozdkbzxsske.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_2vQZ1VI3WTVLnO6LRt0hbA_aktzBDnt';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function submitApplication() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const instagram = document.getElementById('instagram').value.trim();
+    const niche = document.getElementById('niche').value.trim();
+    const chaos = document.getElementById('chaos').value.trim();
+    const revenue = document.querySelector('input[name="revenue"]:checked')?.value || '';
+
+    if (!name || !email || !instagram || !niche || !chaos) {
+      alert('Please fill in all required fields (marked with *)');
+      return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Submitting...';
+
+    const painPoints = Array.from(document.querySelectorAll('.pain-option:checked')).map(el => el.value);
+
+    try {
+      const { error } = await sb.from('creator_applications').insert([{
+        name,
+        email,
+        phone: document.getElementById('phone').value.trim() || null,
+        city: document.getElementById('city').value.trim() || null,
+        instagram_handle: instagram,
+        followers: document.getElementById('followers').value.trim() || null,
+        other_platform: document.getElementById('other_platform').value.trim() || null,
+        niche,
+        monthly_revenue: revenue,
+        pain_points: painPoints.join(', '),
+        chaos_description: chaos,
+        source: document.getElementById('source').value || null,
+        status: 'pending'
+      }]);
+
+      if (error) throw new Error(error.message);
+
+      document.getElementById('formScreen').style.display = 'none';
+      document.getElementById('successScreen').style.display = 'block';
+
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerHTML = 'Submit Application →';
+      alert('Error submitting: ' + err.message);
+    }
+  }
+</script>
+</body>
+</html>
